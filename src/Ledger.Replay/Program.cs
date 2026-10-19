@@ -8,7 +8,9 @@ foreach (var row in result.DailyRows)
     Console.WriteLine($"D{row.Day} | {row.AccountId} | {CurrencyRules.Format(row.Currency, row.LedgerBalance)} | {CurrencyRules.Format(row.Currency, row.AvailableBalance)} | {CurrencyRules.Format(row.Currency, row.Fees)} | {CurrencyRules.Format(row.Currency, row.Interest)} | {row.AuthorizationSummary}");
 }
 
-Console.WriteLine("\nBACKDATED-EVENT DIAGNOSTICS");
+Console.WriteLine("\nVALUE-DATE RESTATEMENT / BACKDATED-EVENT DIAGNOSTICS");
+var d2EventTime = result.DailyRows.Single(row => row.Day == 2 && row.AccountId == "ACC-001").LedgerBalance;
+Console.WriteLine($"- D2 closing balance as originally known on D2: {CurrencyRules.Format(Currency.AED, d2EventTime)}.");
 foreach (var diagnostic in result.Diagnostics) Console.WriteLine($"- {diagnostic}");
 
 Console.WriteLine("\nERRORS");
