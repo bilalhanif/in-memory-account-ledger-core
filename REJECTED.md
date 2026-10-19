@@ -11,4 +11,4 @@ The following supplied criteria are intentionally not treated as correct asserti
 7. **“Each BHD instalment is 3.334.” — REJECTED.** Three such instalments total 10.002 BHD, not 10.000 BHD. A reconciled 3-decimal split is 3.334, 3.333, 3.333 BHD.
 8. **“Discard the interest remainder.” — REJECTED.** Silently discarding accrued fractions can cause reconciliation drift. This implementation rounds and posts daily interest at currency precision; any separate end-of-period remainder treatment must be an explicit business rule.
 
-The intentionally failing test \`REJECTED_criterion_7_claims_all_three_instalments_are_3_334\` preserves a visible counterexample for criterion #7.
+The intentionally failing test `REJECTED_criterion_7_claims_all_three_instalments_are_3_334` preserves a visible counterexample for criterion #7.
