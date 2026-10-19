@@ -1,0 +1,10 @@
+# Ambiguities and explicit interpretations
+
+1. **Value date versus event date.** E7 arrives on D5 but carries value date D2; E9 arrives on D6 and reverses E7 with value date D2. The model stores both \`ValueDay\` and \`EventDay\`: E7 is received on D5 but value-dated D2; E9 is received on D6 and also value-dated D2. Balances use value dates, while the fee assessment uses the event timeline so a later reversal cannot erase previously assessed fees.
+2. **Overdraft fee timing.** The stated rule is AED 25.00 per negative value date. When E7 arrives on D5 with value date D2, the engine retrospectively assesses fees for negative value dates through D5 (D2, D4, D5 in this scenario). E9 arrives on D6, restores principal, and does not erase fees already assessed; no new D6 fee is added. A production system should confirm its backdated-adjustment and fee-waiver policy.
+3. **Authorization holds.** Holds reduce available balance but do not create ledger entries. Auth-A is treated as held from D2 until its D4 settlement; Auth-B remains held through D6 because it is not settled in the scenario.
+4. **Settlement accounting.** E5 posts an AED 185.00 debit against Auth-A's AED 200.00 hold. The unused portion of the hold is released at settlement. Partial-settlement policy beyond this example is unspecified.
+5. **Interest timing.** Interest is calculated daily on positive balances and rounded to currency precision each day. Compounding occurs because posted interest participates in later days' balances. If the intended rule is non-compounding or a Day6-only reconciliation, that should be specified explicitly.
+6. **Reversal semantics.** E9 appends a compensating credit linked to E7. It does not mutate or remove E7 and does not automatically reverse fees or interest already charged.
+7. **Error reporting.** E6 is rejected because Auth-Z does not exist. The engine reports a clear error and emits no settlement ledger entry.
+8. **Scope.** This is a compact exercise implementation, not a general ledger: no concurrency, persistence, idempotency store, account locking, external input parser, or regulatory controls are included.
