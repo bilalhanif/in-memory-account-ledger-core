@@ -4,8 +4,8 @@
 
 - AED: 2 decimal places.
 - BHD: 3 decimal places.
-- \`decimal\` is used for financial arithmetic; binary floating-point types are not used.
-- Rounding uses \`MidpointRounding.AwayFromZero\` at the currency's minor-unit precision.
+- `decimal` is used for financial arithmetic; binary floating-point types are not used.
+- Rounding uses `MidpointRounding.AwayFromZero` at the currency's minor-unit precision.
 
 ## BHD split
 
@@ -24,4 +24,4 @@ Daily fee is AED 25.00 when the value-dated balance is negative at end of day. E
 
 ## Interest
 
-Daily rate: 0.04% = 0.0004. For a positive daily balance \`B\`, unrounded daily interest is \`B × 0.0004\`, then rounded to the currency precision. Daily rounded interest entries are posted to the ledger. The implementation does not discard an unrounded remainder silently; any alternative aggregate/reconciliation method should be explicitly specified before changing this policy.
+Daily rate: 0.04% = 0.0004. For a positive daily balance `B`, unrounded daily interest is `B × 0.0004`, then rounded to the currency precision. Daily rounded interest entries are posted to the ledger. The implementation does not discard an unrounded remainder silently; any alternative aggregate/reconciliation method should be explicitly specified before changing this policy.
