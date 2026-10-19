@@ -58,8 +58,8 @@ public sealed class LedgerEngineTests
     public void Daily_interest_is_rounded_but_capitalized_as_one_D6_credit()
     {
         var result = new LedgerEngine().RunScenario();
-        Assert.Single(result.Entries.Where(e => e.AccountId == "ACC-001" && e.Kind == EntryKind.Interest));
-        Assert.Single(result.Entries.Where(e => e.AccountId == "ACC-002" && e.Kind == EntryKind.Interest));
+        Assert.Single(result.Entries, e => e.AccountId == "ACC-001" && e.Kind == EntryKind.Interest);
+        Assert.Single(result.Entries, e => e.AccountId == "ACC-002" && e.Kind == EntryKind.Interest);
         Assert.Contains(result.Entries, e => e.Id == "INT-ACC-001-D6" && e.ValueDay == 6 && e.Amount == 0.81m);
         Assert.Contains(result.Entries, e => e.Id == "INT-ACC-002-D6" && e.ValueDay == 6 && e.Amount == 0.008m);
     }
