@@ -44,8 +44,8 @@ public sealed class LedgerEngine
         Append("E1", "ACC-001", 1, EntryKind.Credit, 1200.00m, Currency.AED, "D1 credit");
         Append("E2", "ACC-001", 1, EntryKind.Debit, 950.00m, Currency.AED, "D1 debit");
 
-        // E3: Auth-A is approved on D2 because 250 - 200 remains non-negative.
-        _authorizations.Add(new Authorization("Auth-A", "ACC-001", 200m, Currency.AED, 2, AuthorizationState.Approved));
+        // E3: approval is computed from available balance, not hard-coded.
+        Authorize("Auth-A", "ACC-001", 200m, Currency.AED, 2);
 
         // E4-E6: D3 credit, valid Auth-A settlement, invalid Auth-Z settlement.
         Append("E4", "ACC-001", 3, EntryKind.Credit, 400.00m, Currency.AED, "D3 credit");
@@ -72,14 +72,8 @@ public sealed class LedgerEngine
             }
         }
 
-        // E8: authorization approval must check the actual available balance after hold.
-        const decimal authBHold = 90m;
-        var authBLedgerBalance = Balance("ACC-001", valueDay: 5, knownByEventDay: 5, includeFees: true, includeInterest: false);
-        var authBAvailableAfterHold = authBLedgerBalance - authBHold;
-        var authBState = authBAvailableAfterHold >= 0 ? AuthorizationState.Approved : AuthorizationState.Rejected;
-        _authorizations.Add(new Authorization("Auth-B", "ACC-001", authBHold, Currency.AED, 5, authBState));
-        if (authBState == AuthorizationState.Rejected)
-            _errors.Add($"E8 rejected: Auth-B hold of {CurrencyRules.Format(Currency.AED, authBHold)} would make available balance {CurrencyRules.Format(Currency.AED, authBAvailableAfterHold)}; no hold was applied.");
+        // E8: the same available-balance rule applies to every authorization.
+        Authorize("Auth-B", "ACC-001", 90m, Currency.AED, 5);
 
         // E9 arrives D6 and appends a compensating credit value-dated D2.
         Append("E9", "ACC-001", 2, EntryKind.Reversal, 620.00m, Currency.AED,
@@ -180,6 +174,20 @@ public sealed class LedgerEngine
         if (id == "Auth-A") return day >= 4 ? AuthorizationState.Settled : AuthorizationState.Approved;
         if (id == "Auth-B" && day < 5) return AuthorizationState.Open;
         return finalState;
+    }
+
+    private void Authorize(string authId, string accountId, decimal holdAmount, Currency currency, int day)
+    {
+        var ledgerBalance = Balance(accountId, day, knownByEventDay: day, includeFees: true, includeInterest: false);
+        var existingHolds = _authorizations
+            .Where(a => a.AccountId == accountId && a.Day <= day && IsActive(a, day))
+            .Sum(a => a.HoldAmount);
+        var availableAfterHold = ledgerBalance - existingHolds - holdAmount;
+        var state = availableAfterHold >= 0 ? AuthorizationState.Approved : AuthorizationState.Rejected;
+
+        _authorizations.Add(new Authorization(authId, accountId, holdAmount, currency, day, state));
+        if (state == AuthorizationState.Rejected)
+            _errors.Add($"{authId} rejected: hold of {CurrencyRules.Format(currency, holdAmount)} would make available balance {CurrencyRules.Format(currency, availableAfterHold)}; no hold was applied.");
     }
 
     private void Settle(string entryId, string authId, decimal amount, int day)
