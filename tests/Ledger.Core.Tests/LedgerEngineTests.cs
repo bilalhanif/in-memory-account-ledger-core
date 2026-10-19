@@ -21,6 +21,13 @@ public sealed class LedgerEngineTests
     }
 
     [Fact]
+    public void Auth_A_is_approved_only_when_available_balance_covers_the_hold()
+    {
+        var result = new LedgerEngine().RunScenario();
+        Assert.Contains(result.DailyRows, r => r.AccountId == "ACC-001" && r.Day == 2 && r.AuthorizationSummary.Contains("Auth-A:Approved"));
+    }
+
+    [Fact]
     public void Auth_B_is_rejected_when_hold_would_make_available_balance_negative()
     {
         var result = new LedgerEngine().RunScenario();
