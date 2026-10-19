@@ -1,14 +1,23 @@
-# Rejected acceptance criteria
+# Acceptance-criteria decisions
 
-The following supplied criteria are intentionally not treated as correct assertions because they conflict with the scenario's arithmetic or ledger semantics.
+The assignment warns that some supplied criteria are incorrect. This file distinguishes the criteria accepted as stated from those rejected.
 
-1. **“Day 2 balance is −AED 370.00.” — REJECTED as a final closing-balance assertion.** −AED 370.00 is the principal balance after E7's backdated debit and before the overdraft fee and later reversal. It is a useful intermediate calculation, not the final replay balance once fee and reversal entries are included.
-2. **“E7 causes exactly one Day 2 fee.” — ACCEPTED only with qualification.** One fee is assessed for the single negative value date D2. The general rule is one fee per negative account/day, not one fee per debit event; multiple qualifying debits on the same day must not multiply the daily fee.
-3. **“Auth-A settlement is accepted.” — ACCEPTED.** Auth-A exists with a 200.00 AED hold; the 185.00 AED settlement is within that hold.
-4. **“Unknown Auth-Z settlement is rejected and posts no funds.” — ACCEPTED.** No authorization exists, so E6 is rejected and creates no ledger entry.
-5. **“Auth-B hold affects available balance, not ledger balance.” — ACCEPTED.** The hold is not a ledger posting and remains outstanding through D6.
-6. **“E9 restores pre-E7 balances and fees.” — REJECTED as written.** E9 compensates E7's principal effect, but the fee triggered by the historical overdraft is not automatically erased. Restoring principal does not imply restoring fees.
-7. **“Each BHD instalment is 3.334.” — REJECTED.** Three such instalments total 10.002 BHD, not 10.000 BHD. A reconciled 3-decimal split is 3.334, 3.333, 3.333 BHD.
-8. **“Discard the interest remainder.” — REJECTED.** Silently discarding accrued fractions can cause reconciliation drift. This implementation rounds and posts daily interest at currency precision; any separate end-of-period remainder treatment must be an explicit business rule.
+1. **“The Day 2 closing ledger balance, evaluated at end of Day 5 and before any fee is assessed, is AED −370.00.” — ACCEPTED.** E7 is known by D5 but value-dated D2: AED 1,200 − AED 950 − AED 620 = −AED 370 before fees.
+2. **“E7 causes exactly one overdraft fee to be assessed, on Day 2.” — REJECTED.** The rule is one fee per negative account/value day, not one fee per transaction. Once E7 is received, the negative value days are D2, D4, and D5, so three fees are assessed.
+3. **“The Day 4 settlement of Auth-A must be accepted.” — ACCEPTED.** Auth-A exists with an AED 200 hold; AED 185 is within that amount.
+4. **“Any settlement referencing an authorization ID not present in the ledger must be rejected and the funds must not leave the account.” — ACCEPTED.** E6 is rejected because Auth-Z does not exist; no E6 ledger entry is appended.
+5. **“If Auth-B is approved, its hold reduces available balance but not ledger balance.” — ACCEPTED as a conditional rule.** Holds do not create ledger entries. In this scenario Auth-B is rejected because applying AED 90 would make available balance negative, so no active hold is applied.
+6. **“After E9, all balances and fees return to their pre-E7 values.” — REJECTED.** E9 compensates E7's principal effect but does not reverse fees already assessed. A later reversal also must not alter event-time snapshots for D1–D5.
+7. **“The three BHD instalments in E10 must each be BHD 3.334.” — REJECTED.** That totals BHD 10.002, not BHD 10.000. The reconciled split is 3.334 + 3.333 + 3.333 = 10.000 BHD.
+8. **“If the rounded daily interest accruals do not sum to the capitalized total, the remainder is discarded.” — REJECTED.** The requirements explicitly say rounded daily accruals must sum exactly to the capitalized total. The engine sums the rounded daily amounts and posts one D6 credit; it does not discard a remainder.
 
-The intentionally failing test `REJECTED_criterion_7_claims_all_three_instalments_are_3_334` preserves a visible counterexample for criterion #7.
+## Approaches abandoned during the build
+
+- **Posting daily interest credits:** abandoned because the requirement calls for one capitalized credit at the end of D6. Daily accruals are now calculation values only.
+- **Applying a backdated reversal to all historical snapshots:** abandoned because E9 is not known before D6. The replay retains event-time snapshots and records value dates separately.
+- **Approving Auth-B unconditionally:** abandoned because authorization must be declined when the hold would make available balance negative.
+- **Splitting BHD 10.000 into three 3.334 instalments:** rejected because it creates BHD 10.002 and fails reconciliation.
+
+## Intentionally failing test
+
+REJECTED_criterion_7_claims_all_three_instalments_are_3_334 is deliberately red. It demonstrates that the rejected assertion conflicts with currency precision and reconciliation; it is not a failing test of the intended ledger behavior.
